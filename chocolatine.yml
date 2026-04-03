@@ -1,0 +1,99 @@
+name: chocolatine
+
+on:
+  push:
+    branches-ignore:
+      - 'no-ga/**'
+  pull_request:
+    branches-ignore:
+      - 'no-ga/**'
+
+env:
+  MIRROR_SSH_URL: "git@github.com:volcinator8000/painauchocolat.git"
+  EXECUTABLES: "painauchocolat,mysh"
+
+jobs:
+  check_repository:
+    runs-on: ubuntu-latest
+    outputs:
+      is_mirror: ${{ steps.check.outputs.is_mirror }}
+    steps:
+      - id: check
+        run: |
+          if [ "${{ github.event.repository.ssh_url }}" == "${{ env.MIRROR_SSH_URL }}" ]; then
+            echo "is_mirror=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_mirror=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  check_compilation_and_coding_style:
+    needs: check_repository
+    if: needs.check_repository.outputs.is_mirror == 'false'
+    runs-on: ubuntu-latest
+    container: epitechcontent/epitest-docker
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Launch coding style checker
+        run: banana-check-repo
+        
+      - name: Compile project
+        run: make
+        env:
+          CC: epiclang
+        timeout-minutes: 2
+        
+      - name: Display coding style errors
+        run: |
+          if [ -s coding-style-reports.log ]; then
+            while IFS= read -r line; do
+              FILE=$(echo "$line" | cut -d':' -f1 | xargs)
+              LINE=$(echo "$line" | cut -d':' -f2 | xargs)
+              SEVERITY=$(echo "$line" | cut -d':' -f3 | xargs)
+              ERROR=$(echo "$line" | cut -d':' -f4 | xargs)
+              echo "::error file=$FILE,line=$LINE,title=$SEVERITY coding style error::$ERROR"
+            done < coding-style-reports.log
+            exit 1
+          fi
+
+      - name: Clean project
+        run: make clean
+        
+      - name: Verify executables
+        run: |
+          IFS=',' read -ra EXES <<< "$EXECUTABLES"
+          for exe in "${EXES[@]}"; do
+            if [ ! -f "$exe" ] || [ ! -x "$exe" ]; then
+              echo "::error title=Executable missing or not executable::$exe is missing or cannot be executed."
+              exit 1
+            fi
+          done
+
+  run_tests:
+    needs: check_compilation_and_coding_style
+    runs-on: ubuntu-latest
+    container: epitechcontent/epitest-docker
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        run: make tests_run
+        timeout-minutes: 2
+
+  push_to_mirror:
+    needs: run_tests
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to mirror
+        uses: pixta-dev/repository-mirroring-action@v1
+        with:
+          target_repo_url: ${{ env.MIRROR_SSH_URL }}
+          ssh_private_key: ${{ secrets.GIT_SSH_PRIVATE_KEY }}
