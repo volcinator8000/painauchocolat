@@ -1,6 +1,6 @@
 ##
-## EPITECH PROJECT, 2026
-## chocolatine
+## EPITECH PROJECT, 2025
+## G-DOP-200-LYN-2-1-chocolatine-23
 ## File description:
 ## Makefile
 ##
