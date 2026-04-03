@@ -11,3 +11,35 @@ on:
 env:
   MIRROR_SSH_URL: "git@github.com:volcinator8000/painauchocolat.git"
   EXECUTABLES: "painauchocolat"
+
+jobs:
+  check_compilation_and_coding_style:
+    if: github.event.repository.ssh_url != env.MIRROR_SSH_URL
+    runs-on: ubuntu-latest
+    container: epitechcontent/epitest-docker
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Launch coding style checker
+        run: banana-check-repo
+
+      - name: Compile project
+        run: make
+        env:
+          CC: epiclang
+        timeout-minutes: 2
+
+      - name: Display coding style errors
+        run: |
+          if [ -s coding-style-reports.log ]; then
+            while IFS= read -r line; do
+              FILE=$(echo "$line" | cut -d':' -f1 | xargs)
+              LINE=$(echo "$line" | cut -d':' -f2 | xargs)
+              SEVERITY=$(echo "$line" | cut -d':' -f3 | xargs)
+              ERROR=$(echo "$line" | cut -d':' -f4 | xargs)
+              echo "::error file=$FILE,line=$LINE,title=$SEVERITY coding style error::$ERROR"
+            done < coding-style-reports.log
+            exit 1
+          fi
+
