@@ -43,3 +43,16 @@ jobs:
             exit 1
           fi
 
+      - name: Clean project
+        run: make clean
+
+      - name: Verify executables
+        run: |
+          IFS=',' read -ra EXES <<< "$EXECUTABLES"
+          for exe in "${EXES[@]}"; do
+            if [ ! -f "$exe" ] || [ ! -x "$exe" ]; then
+              echo "::error title=Executable missing or not executable::$exe is missing or cannot be executed."
+              exit 1
+            fi
+          done
+
