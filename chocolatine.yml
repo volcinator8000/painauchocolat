@@ -56,3 +56,15 @@ jobs:
             fi
           done
 
+  run_tests:
+    needs: check_compilation_and_coding_style
+    if: github.event.repository.ssh_url != env.MIRROR_SSH_URL
+    runs-on: ubuntu-latest
+    container: epitechcontent/epitest-docker
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        run: make tests_run
+        timeout-minutes: 2
