@@ -10,7 +10,7 @@ on:
 
 env:
   MIRROR_SSH_URL: "git@github.com:volcinator8000/painauchocolat.git"
-  EXECUTABLES: "painauchocolat,mysh"
+  EXECUTABLES: "painauchocolat"
 
 jobs:
   check_repository:
@@ -37,13 +37,13 @@ jobs:
 
       - name: Launch coding style checker
         run: banana-check-repo
-        
+
       - name: Compile project
         run: make
         env:
           CC: epiclang
         timeout-minutes: 2
-        
+
       - name: Display coding style errors
         run: |
           if [ -s coding-style-reports.log ]; then
@@ -59,7 +59,7 @@ jobs:
 
       - name: Clean project
         run: make clean
-        
+
       - name: Verify executables
         run: |
           IFS=',' read -ra EXES <<< "$EXECUTABLES"
