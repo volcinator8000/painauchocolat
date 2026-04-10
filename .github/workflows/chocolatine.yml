@@ -16,7 +16,7 @@ on:
       - 'no-ga/**'
 
 env:
-  MIRROR_SSH_URL: "git@github.com:EpitechPGE1-2025/G-DOP-200-LYN-2-1-chocolatine-23.git"
+  MIRROR_SSH_URL: "git@github.com:volcinator8000/painauchocolat.git"
   EXECUTABLES: "painauchocolat"
 
 jobs:
@@ -105,4 +105,3 @@ jobs:
         with:
           target_repo_url: ${{ env.MIRROR_SSH_URL }}
           ssh_private_key: ${{ secrets.GIT_SSH_PRIVATE_KEY }}
- 
